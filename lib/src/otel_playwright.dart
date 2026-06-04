@@ -2,7 +2,6 @@
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
-import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_playwright_suppression.dart';
 
@@ -60,60 +59,78 @@ Future<T> tracedPlaywright<T>({
   final t = tracer ?? OTel.tracerProvider().getTracer('otel_playwright');
   final span = t.startSpan('playwright $operation', kind: SpanKind.client);
   try {
-    span.setStringAttribute('rpc.system', 'playwright');
+    span.addAttributes(
+        OTel.attributes([OTel.attributeString('rpc.system', 'playwright')]));
     final r = await invoke();
     final res = r.result;
     if (res != null) {
       if (res.browser != null) {
-        span.setStringAttribute('browser.name', res.browser!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('browser.name', res.browser!)]));
       }
       if (res.browserVersion != null) {
-        span.setStringAttribute('browser.version', res.browserVersion!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('browser.version', res.browserVersion!)]));
       }
       if (res.contextId != null) {
-        span.setStringAttribute('playwright.context.id', res.contextId!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('playwright.context.id', res.contextId!)]));
       }
       if (res.pageId != null) {
-        span.setStringAttribute('playwright.page.id', res.pageId!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('playwright.page.id', res.pageId!)]));
       }
       if (res.url != null) {
-        span.setStringAttribute('url.full', res.url!);
+        span.addAttributes(
+            OTel.attributes([OTel.attributeString('url.full', res.url!)]));
       }
       if (res.selector != null) {
-        span.setStringAttribute('playwright.selector', res.selector!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('playwright.selector', res.selector!)]));
       }
       if (res.testFile != null) {
-        span.setStringAttribute('test.file', res.testFile!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('test.file', res.testFile!)]));
       }
       if (res.testName != null) {
-        span.setStringAttribute('test.name', res.testName!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('test.name', res.testName!)]));
       }
       if (res.testCaseId != null) {
-        span.setStringAttribute('test.case.id', res.testCaseId!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('test.case.id', res.testCaseId!)]));
       }
       if (res.viewportWidth != null) {
-        span.setIntAttribute('playwright.viewport.width', res.viewportWidth!);
+        span.addAttributes(OTel.attributes([
+          OTel.attributeInt('playwright.viewport.width', res.viewportWidth!)
+        ]));
       }
       if (res.viewportHeight != null) {
-        span.setIntAttribute('playwright.viewport.height', res.viewportHeight!);
+        span.addAttributes(OTel.attributes([
+          OTel.attributeInt('playwright.viewport.height', res.viewportHeight!)
+        ]));
       }
       if (res.durationMs != null) {
-        span.setIntAttribute('test.duration', res.durationMs!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeInt('test.duration', res.durationMs!)]));
       }
       if (res.statusCode != null) {
-        span.setIntAttribute('http.response.status_code', res.statusCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeInt('http.response.status_code', res.statusCode!)]));
       }
       if (res.errorCode != null) {
-        span.setStringAttribute('playwright.error.code', res.errorCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('playwright.error.code', res.errorCode!)]));
       }
-      final fail =
-          res.errorCode != null ||
+      final fail = res.errorCode != null ||
           (res.statusCode != null && res.statusCode! >= 400);
       if (fail) {
-        span.setStringAttribute(
-          ErrorResource.errorType.key,
-          res.errorCode ?? 'playwright.error',
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString(
+            ErrorResource.errorType.key,
+            res.errorCode ?? 'playwright.error',
+          )
+        ]));
         span.setStatus(SpanStatusCode.Error, res.errorMessage);
       }
     }
