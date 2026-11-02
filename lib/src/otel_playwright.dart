@@ -1,11 +1,12 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_playwright_suppression.dart';
 
 class PlaywrightResult {
+  /// Creates a result.
   const PlaywrightResult({
     this.browser,
     this.browserVersion,
@@ -41,8 +42,13 @@ class PlaywrightResult {
   final String? errorMessage;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class PlaywrightCallResult<T> {
+  /// Creates a call result.
   const PlaywrightCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final PlaywrightResult? result;
 }
@@ -50,84 +56,88 @@ class PlaywrightCallResult<T> {
 Future<T> tracedPlaywright<T>({
   required String operation,
   required Future<PlaywrightCallResult<T>> Function() invoke,
-  Tracer? tracer,
+  APITracer? tracer,
 }) async {
   if (playwrightInstrumentationSuppressed()) {
     final r = await invoke();
     return r.value;
   }
-  final t = tracer ?? OTel.tracerProvider().getTracer('otel_playwright');
+  final t = tracer ?? OTelAPI.tracerProvider().getTracer('otel_playwright');
   final span = t.startSpan('playwright $operation', kind: SpanKind.client);
   try {
-    span.addAttributes(
-        OTel.attributes([OTel.attributeString('rpc.system', 'playwright')]));
+    span.addAttributes(OTelAPI.attributes(
+        [OTelAPI.attributeString('rpc.system', 'playwright')]));
     final r = await invoke();
     final res = r.result;
     if (res != null) {
       if (res.browser != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('browser.name', res.browser!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('browser.name', res.browser!)]));
       }
       if (res.browserVersion != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('browser.version', res.browserVersion!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('browser.version', res.browserVersion!)]));
       }
       if (res.contextId != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('playwright.context.id', res.contextId!)]));
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeString('playwright.context.id', res.contextId!)
+        ]));
       }
       if (res.pageId != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('playwright.page.id', res.pageId!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('playwright.page.id', res.pageId!)]));
       }
       if (res.url != null) {
-        span.addAttributes(
-            OTel.attributes([OTel.attributeString('url.full', res.url!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('url.full', res.url!)]));
       }
       if (res.selector != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('playwright.selector', res.selector!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('playwright.selector', res.selector!)]));
       }
       if (res.testFile != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('test.file', res.testFile!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('test.file', res.testFile!)]));
       }
       if (res.testName != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('test.name', res.testName!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('test.name', res.testName!)]));
       }
       if (res.testCaseId != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('test.case.id', res.testCaseId!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeString('test.case.id', res.testCaseId!)]));
       }
       if (res.viewportWidth != null) {
-        span.addAttributes(OTel.attributes([
-          OTel.attributeInt('playwright.viewport.width', res.viewportWidth!)
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeInt('playwright.viewport.width', res.viewportWidth!)
         ]));
       }
       if (res.viewportHeight != null) {
-        span.addAttributes(OTel.attributes([
-          OTel.attributeInt('playwright.viewport.height', res.viewportHeight!)
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeInt(
+              'playwright.viewport.height', res.viewportHeight!)
         ]));
       }
       if (res.durationMs != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeInt('test.duration', res.durationMs!)]));
+        span.addAttributes(OTelAPI.attributes(
+            [OTelAPI.attributeInt('test.duration', res.durationMs!)]));
       }
       if (res.statusCode != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeInt('http.response.status_code', res.statusCode!)]));
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeInt('http.response.status_code', res.statusCode!)
+        ]));
       }
       if (res.errorCode != null) {
-        span.addAttributes(OTel.attributes(
-            [OTel.attributeString('playwright.error.code', res.errorCode!)]));
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeString('playwright.error.code', res.errorCode!)
+        ]));
       }
       final fail = res.errorCode != null ||
           (res.statusCode != null && res.statusCode! >= 400);
       if (fail) {
-        span.addAttributes(OTel.attributes([
-          OTel.attributeString(
-            ErrorResource.errorType.key,
+        span.addAttributes(OTelAPI.attributes([
+          OTelAPI.attributeString(
+            ErrorAttributes.errorType.key,
             res.errorCode ?? 'playwright.error',
           )
         ]));
